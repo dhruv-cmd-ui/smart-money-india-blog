@@ -50,6 +50,7 @@ INDEX_TEMPLATE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{site_name} — Personal Finance for India</title>
 <meta name="description" content="Practical, India-specific personal finance and investing guides.">
+<meta name="p:domain_verify" content="dbfb7ad96e16ce00515dd5459bea91ec"/>
 <link rel="alternate" type="application/rss+xml" title="{site_name}" href="rss.xml">
 <style>
   body {{ font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.65; }}

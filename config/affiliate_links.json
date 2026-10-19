@@ -1,5 +1,5 @@
 {
   "_comment": "Same pattern as stream1: leave 'ADD_YOUR_...' placeholders until approved; the article generator skips the CTA line until a real link is set.",
   "amazon_books": "ADD_YOUR_AMAZON_ASSOCIATES_LINK",
-  "templates_store": "ADD_YOUR_PAYHIP_STORE_LINK"
+  "templates_store": "https://payhip.com/b/IbWAZ"
 }
