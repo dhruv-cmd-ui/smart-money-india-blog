@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel>
     <title>Smart Money India</title>
-    <link>https://REPLACE_WITH_YOUR_USERNAME.github.io/REPLACE_WITH_YOUR_REPO/index.html</link>
+    <link>https://dhruv-cmd-ui.github.io/smart-money-india-blog/index.html</link>
     <description>India personal finance guides</description>
-    <item><title>Index Funds for Beginners: A Simple India-Focused Guide</title><link>https://REPLACE_WITH_YOUR_USERNAME.github.io/REPLACE_WITH_YOUR_REPO/articles/index-funds-beginners-india.html</link><description>Explain what an index fund is, Nifty 50 vs Sensex tracking funds, expense ratios, and how a beginner should pick their first one.</description><pubDate>2026-10-19</pubDate><guid>https://REPLACE_WITH_YOUR_USERNAME.github.io/REPLACE_WITH_YOUR_REPO/articles/index-funds-beginners-india.html</guid></item>
-    <item><title>How to Improve Your CIBIL Score in India: A Practical Guide</title><link>https://REPLACE_WITH_YOUR_USERNAME.github.io/REPLACE_WITH_YOUR_REPO/articles/credit-score-improve-india.html</link><description>Explain what actually moves a CIBIL score, common myths, and a realistic 6-month improvement plan.</description><pubDate>2026-10-19</pubDate><guid>https://REPLACE_WITH_YOUR_USERNAME.github.io/REPLACE_WITH_YOUR_REPO/articles/credit-score-improve-india.html</guid></item>
+    <item><title>Debt Mutual Funds Explained: Risk, Returns, and When to Use Them</title><link>https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/debt-funds-explained-india.html</link><description>Explain interest rate risk, credit risk, and duration in debt funds for an Indian reader considering them as an FD alternative.</description><pubDate>2026-10-19</pubDate><guid>https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/debt-funds-explained-india.html</guid></item>
   </channel></rss>

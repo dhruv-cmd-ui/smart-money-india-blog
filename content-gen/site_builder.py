@@ -7,7 +7,7 @@ from mini_markdown import to_html
 
 SITE_DIR = Path(__file__).resolve().parent.parent / "docs"
 ARTICLES_DIR = SITE_DIR / "articles"
-SITE_BASE_URL = "https://REPLACE_WITH_YOUR_USERNAME.github.io/REPLACE_WITH_YOUR_REPO"
+SITE_BASE_URL = "https://dhruv-cmd-ui.github.io/smart-money-india-blog"
 SITE_NAME = "Smart Money India"
 DISCLAIMER = (
     "Educational content only — not investment advice. Not a SEBI-registered advisor. "
