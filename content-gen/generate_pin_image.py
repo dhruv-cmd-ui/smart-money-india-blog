@@ -148,34 +148,31 @@ def make_pin(slug: str, title: str, description: str) -> Path:
     draw.rounded_rectangle([MARGIN, MARGIN, MARGIN + pw + 60, MARGIN + 74], radius=37, fill=accent)
     draw.text((MARGIN + 30, MARGIN + 17), label, font=pill_font, fill="#111111")
 
-    # Title: biggest font that fits in at most 6 lines; first line highlighted in the accent colour.
-    for size in (96, 88, 80, 72, 64, 58):
+    # Title: biggest font that fits in at most 4 lines; first line highlighted in the accent colour.
+    for size in (92, 84, 76, 68, 60, 54):
         title_font = _font("ExtraBold", size)
         lines = _wrap(draw, title, title_font, width)
-        if len(lines) <= 6:
+        if len(lines) <= 4:
             break
-    line_h = int(size * 1.22)
-    y = 330
+    line_h = int(size * 1.2)
+    y = 190
     for i, line in enumerate(lines):
         draw.text((MARGIN + 3, y + 4), line, font=title_font, fill=(0, 0, 0, 90))  # soft shadow
         draw.text((MARGIN, y), line, font=title_font, fill=accent if i == 0 else "#FFFFFF")
         y += line_h
+    draw.rounded_rectangle([MARGIN, y + 10, MARGIN + 140, y + 22], radius=6, fill=accent)
 
-    # Accent bar + description.
-    y += 25
-    draw.rounded_rectangle([MARGIN, y, MARGIN + 140, y + 12], radius=6, fill=accent)
-    y += 50
-    chip_font = _font("Bold", 36)
-    for label in ("India-specific numbers", "Simple examples", "5-minute read"):
-        cw = _text_width(draw, label, chip_font)
-        draw.rounded_rectangle([MARGIN, y, MARGIN + cw + 110, y + 78], radius=39, fill=(255, 255, 255, 235))
-        cx, cy = MARGIN + 44, y + 39  # drawn check mark (no font glyph needed)
-        draw.line([(cx - 14, cy), (cx - 4, cy + 11), (cx + 16, cy - 12)], fill="#1E8E3E", width=7, joint="curve")
-        draw.text((MARGIN + 80, y + 14), label, font=chip_font, fill="#111111")
-        y += 100
+    # Topic icon scene (supersampled 2x for smooth edges).
+    scene_top, scene_h = 640, 620
+    layer = Image.new("RGBA", (SIZE[0] * 2, scene_h * 2), (0, 0, 0, 0))
+    from pin_icons import draw_scene
+    draw_scene(ImageDraw.Draw(layer), slug, SIZE[0] * 2, scene_h * 2)
+    layer = layer.resize((SIZE[0], scene_h), Image.LANCZOS)
+    img.alpha_composite(layer, (0, scene_top))
+    draw = ImageDraw.Draw(img)
 
     # CTA button + footer.
-    btn_y = SIZE[1] - 270
+    btn_y = SIZE[1] - 215
     draw.rounded_rectangle([MARGIN, btn_y, SIZE[0] - MARGIN, btn_y + 120], radius=60, fill=accent)
     cta_font = _font("ExtraBold", 44)
     cta = "READ THE FULL GUIDE"
@@ -187,7 +184,7 @@ def make_pin(slug: str, title: str, description: str) -> Path:
     draw.polygon([(ax + 28, ay - 18), (ax + 52, ay), (ax + 28, ay + 18)], fill="#111111")
     foot_font = _font("Medium", 30)
     foot = "Free guide on Smart Money India"
-    draw.text(((SIZE[0] - _text_width(draw, foot, foot_font)) / 2, btn_y + 150), foot, font=foot_font, fill="#FFFFFF")
+    draw.text(((SIZE[0] - _text_width(draw, foot, foot_font)) / 2, btn_y + 140), foot, font=foot_font, fill="#FFFFFF")
 
     PINS_DIR.mkdir(parents=True, exist_ok=True)
     out = PINS_DIR / f"{slug}.png"
