@@ -22,7 +22,7 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 from generate_pin_image import make_pin  # noqa: E402
-from site_builder import SITE_DIR, refresh_site_metadata, update_index_sitemap_rss, write_article  # noqa: E402
+from site_builder import CONTENT_VERSION, SITE_DIR, refresh_site_metadata, update_index_sitemap_rss, write_article  # noqa: E402
 
 TOPICS_PATH = Path(__file__).resolve().parent / "topics.json"
 STATE_PATH = Path(__file__).resolve().parent / "state.json"
@@ -43,6 +43,19 @@ BOOK_FOR_TOPIC.update({
     for slug in ("emergency-fund-india", "first-salary-financial-plan", "budgeting-methods-compared")
 })
 
+# Extra facts the model must respect for topics where rules changed recently (verify periodically).
+TOPIC_NOTES = {
+    "best-tax-saving-investments-80c": (
+        "Section 80C deductions (limit Rs 1.5 lakh) are available only under the old tax regime, not the new regime: say so clearly. "
+        "ELSS long-term capital gains above Rs 1.25 lakh per year are taxed at 12.5% (rules from July 2024); tell readers to verify the current rate."
+    ),
+    "gold-investment-options-india": (
+        "The government has not issued new Sovereign Gold Bond tranches since early 2024, so explain SGBs mainly as something already issued that can be "
+        "bought and sold on the stock exchange (8-year maturity, 2.5% annual interest); tell readers to check current availability. "
+        "Do not state capital gains tax rates; tell readers to check the current rules."
+    ),
+}
+
 PROMPT_TEMPLATE = """Write a {word_count}-word educational personal-finance article for an Indian retail\
  investor audience, on the topic: "{title}".
 
@@ -56,6 +69,8 @@ Rules:
 - Do not include a title heading (the page already shows the title) — start directly with the intro paragraph.
 - Only state figures, limits and rates you are certain of; otherwise say "check the current rules" instead of guessing. Never invent statistics or quotes.
 - Include at least one concrete rupee example with simple arithmetic.
+- Write rupee amounts in Indian digit grouping (₹6,00,000 or "6 lakh", never ₹6,000,000) and double-check every calculation.
+- No LaTeX, no markdown tables. Show maths in plain text, e.g. "₹6,00,000 × 1.06^25 ≈ ₹25.7 lakh". Bullet lists with "- " are fine.
 - Do not include a disclaimer (the page already appends one).
 """
 
@@ -88,6 +103,7 @@ def pick_topic() -> dict:
 
 # Free-tier text models, newest first. A model that returns 404 (retired / closed to new users) is skipped.
 GENERIC_MARKER = "Start with the simplest version of the plan"  # text of the offline template
+VERSION_MARKER = CONTENT_VERSION
 GEMINI_MODELS = [m for m in (os.environ.get("GEMINI_MODEL"), "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite") if m]
 
 
@@ -111,6 +127,8 @@ def draft_with_gemini(topic: dict, api_key: str) -> str:
     """Drafts via the Gemini REST API. Overloaded (503/429), slow or retired (404) models are skipped:
     each round tries every remaining model once, then waits and goes around again."""
     prompt = PROMPT_TEMPLATE.format(word_count=700, title=topic["title"], angle=topic["angle"])
+    if topic["slug"] in TOPIC_NOTES:
+        prompt += "\nFacts you must follow: " + TOPIC_NOTES[topic["slug"]] + "\n"
     models = list(GEMINI_MODELS)
     # Low thinking effort keeps responses fast; dropped per model if it rejects the setting.
     configs = {m: {"temperature": 0.6, "maxOutputTokens": 8192, "thinkingConfig": {"thinkingLevel": "low"}} for m in models}
@@ -177,10 +195,15 @@ def make_description(topic: dict) -> str:
     return textwrap.shorten(topic["angle"], width=155, placeholder="...")
 
 
-def rewrite_all(api_key: str) -> None:
+def needs_rewrite(page_html: str, only: bool = False) -> bool:
+    """Generic template text, or a body written before the current content version."""
+    return only or GENERIC_MARKER in page_html or VERSION_MARKER not in page_html
+
+
+def rewrite_all(api_key: str, only: set | None = None) -> None:
     """One-off, resumable: replace every still-generic article body with a real Gemini draft.
 
-    Articles that no longer contain the generic template text are skipped, so a re-run only does what's left.
+    Articles already at the current content version are skipped (--only forces the named slugs), so a re-run only does what's left.
     A failure on one article is logged and the next one is attempted; the exit code reports any failures.
     """
     topics = {t["slug"]: t for t in json.loads(TOPICS_PATH.read_text(encoding="utf-8"))}
@@ -188,10 +211,10 @@ def rewrite_all(api_key: str) -> None:
     done = 0
     for entry in json.loads((SITE_DIR / "manifest.json").read_text(encoding="utf-8")):
         topic = topics.get(entry["slug"])
-        if not topic:
+        if not topic or (only and entry["slug"] not in only):
             continue
         page = SITE_DIR / "articles" / f"{topic['slug']}.html"
-        if page.exists() and GENERIC_MARKER not in page.read_text(encoding="utf-8"):
+        if page.exists() and not needs_rewrite(page.read_text(encoding="utf-8"), only):
             print(f"Skip (already rewritten): {topic['title']}", flush=True)
             continue
         print(f"Rewriting: {topic['title']}", flush=True)
@@ -215,6 +238,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="Write files but don't rely on live Gemini quota state persisting is still fine to commit")
     parser.add_argument("--allow-fallback", action="store_true", help="Publish the generic offline template when no GEMINI_API_KEY is set (testing only)")
+    parser.add_argument("--only", default="", help="Comma-separated slugs to force-rewrite (with --rewrite-all)")
     parser.add_argument("--rewrite-all", action="store_true", help="Rewrite every published article with a fresh Gemini draft")
     args = parser.parse_args()
 
@@ -222,7 +246,7 @@ def main():
     if args.rewrite_all:
         if not api_key:
             sys.exit("GEMINI_API_KEY is required for --rewrite-all")
-        rewrite_all(api_key)
+        rewrite_all(api_key, {x.strip() for x in args.only.split(",") if x.strip()} or None)
         return
     if not api_key and not args.allow_fallback:
         # The offline template is identical filler for every topic, so never publish it by default.

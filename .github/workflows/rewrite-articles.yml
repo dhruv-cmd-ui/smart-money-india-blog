@@ -1,7 +1,12 @@
 name: Rewrite all articles (one-off)
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Optional: comma-separated article slugs to force-rewrite (blank = everything not yet at the current version)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -22,7 +27,8 @@ jobs:
       - name: Rewrite every article with Gemini
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python -u content-gen/generate_article.py --rewrite-all
+          ONLY: ${{ github.event.inputs.only }}
+        run: python -u content-gen/generate_article.py --rewrite-all --only "$ONLY"
 
       - name: Commit rewritten site
         if: always()

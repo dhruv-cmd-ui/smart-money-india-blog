@@ -16,6 +16,7 @@ ARTICLES_DIR = SITE_DIR / "articles"
 LINKS_PATH = Path(__file__).resolve().parent.parent / "config" / "affiliate_links.json"
 SITE_BASE_URL = "https://dhruv-cmd-ui.github.io/smart-money-india-blog"
 SITE_NAME = "Smart Money India"
+CONTENT_VERSION = "<!--cv2-->"  # bump when the prompt/converter changes so old bodies get rewritten
 TOOLKIT_URL = "https://payhip.com/b/IbWAZ"
 DISCLAIMER = (
     "Educational content only — not investment advice. Not a SEBI-registered advisor. "
@@ -196,7 +197,7 @@ def write_article(slug: str, title: str, description: str, body_markdown: str, d
     date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     out_path = ARTICLES_DIR / f"{slug}.html"
     out_path.write_text(
-        render_article(slug, title, description, date, to_html(body_markdown), _load_manifest()), encoding="utf-8"
+        render_article(slug, title, description, date, CONTENT_VERSION + to_html(body_markdown), _load_manifest()), encoding="utf-8"
     )
     return out_path
 
