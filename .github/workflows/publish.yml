@@ -35,3 +35,13 @@ jobs:
           git add docs content-gen/state.json
           git diff --staged --quiet || git commit -m "Publish new article [skip ci]"
           git push
+
+      - name: Announce article on Telegram
+        # Don't fail the whole run if the announcement fails; the article is already published.
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+        run: |
+          sleep 90  # let GitHub Pages deploy so the link works when people click
+          python content-gen/announce_telegram.py
