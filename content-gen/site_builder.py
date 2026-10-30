@@ -15,6 +15,16 @@ DISCLAIMER = (
     "affiliate links; as an Amazon Associate I earn from qualifying purchases."
 )
 
+# Static pages (not in manifest.json) that should still appear in the sitemap and RSS feed.
+EXTRA_PAGES = [
+    {
+        "title": "Recommended Personal Finance Books for Indian Readers",
+        "description": "Hand-picked personal finance and investing books worth reading before you invest.",
+        "date": "2026-10-30",
+        "url": f"{SITE_BASE_URL}/books.html",
+    },
+]
+
 PAGE_TEMPLATE = """<!doctype html>
 <html lang="en">
 <head>
@@ -122,8 +132,9 @@ def update_index_sitemap_rss(slug: str, title: str, description: str) -> None:
         encoding="utf-8",
     )
 
+    feed_entries = entries + EXTRA_PAGES
     urls = "\n".join(
-        f"  <url><loc>{e['url']}</loc><lastmod>{e['date']}</lastmod></url>" for e in entries
+        f"  <url><loc>{e['url']}</loc><lastmod>{e['date']}</lastmod></url>" for e in feed_entries
     )
     sitemap = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}\n</urlset>\n'
     (SITE_DIR / "sitemap.xml").write_text(sitemap, encoding="utf-8")
@@ -132,7 +143,7 @@ def update_index_sitemap_rss(slug: str, title: str, description: str) -> None:
         f"    <item><title>{e['title']}</title><link>{e['url']}</link>"
         f"<description>{e['description']}</description>"
         f"<pubDate>{e['date']}</pubDate><guid>{e['url']}</guid></item>"
-        for e in entries
+        for e in feed_entries
     )
     rss = (
         '<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel>\n'
