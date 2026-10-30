@@ -23,6 +23,21 @@ TOPICS_PATH = Path(__file__).resolve().parent / "topics.json"
 STATE_PATH = Path(__file__).resolve().parent / "state.json"
 LINKS_PATH = Path(__file__).resolve().parent.parent / "config" / "affiliate_links.json"
 
+# Topic slug -> (link_key in affiliate_links.json, book title, one-line reason). Topics not listed
+# (insurance, tax, credit score, loans) fall back to the general books page CTA only.
+BOOK_FOR_TOPIC = {
+    slug: ("amazon_psychology_of_money", "The Psychology of Money", "why investor behaviour matters more than the product you pick")
+    for slug in (
+        "sip-vs-lumpsum", "index-funds-beginners-india", "mutual-fund-direct-vs-regular",
+        "retirement-planning-30s-india", "nps-vs-mutual-funds-retirement",
+        "gold-investment-options-india", "debt-funds-explained-india",
+    )
+}
+BOOK_FOR_TOPIC.update({
+    slug: ("amazon_millionaire_next_door", "The Millionaire Next Door (Hindi edition)", "how everyday savers actually build wealth by spending less than they earn")
+    for slug in ("emergency-fund-india", "first-salary-financial-plan", "budgeting-methods-compared")
+})
+
 PROMPT_TEMPLATE = """Write a {word_count}-word educational personal-finance article for an Indian retail\
  investor audience, on the topic: "{title}".
 
@@ -109,6 +124,11 @@ def main():
     else:
         body = draft_fallback(topic)
         source = "fallback-template"
+
+    book = BOOK_FOR_TOPIC.get(topic["slug"])
+    book_url = load_affiliate_link(book[0]) if book else None
+    if book_url:
+        body += f"\n\n**Further reading:** [{book[1]}]({book_url}) explains {book[2]}. (affiliate link — we may earn a commission)"
 
     cta_link = load_affiliate_link("amazon_books")
     if cta_link:

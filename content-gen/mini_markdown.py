@@ -21,4 +21,7 @@ def to_html(text: str) -> str:
 
 def _inline(text: str) -> str:
     escaped = html.escape(text)
-    return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", escaped)
+    escaped = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", escaped)
+    escaped = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r'<a href="\2" rel="sponsored nofollow">\1</a>', escaped)
+    # Autolink bare URLs (not already inside an href or tag).
+    return re.sub(r'(?<![">(])(https?://[^\s<)]+)', r'<a href="\1" rel="sponsored nofollow">\1</a>', escaped)

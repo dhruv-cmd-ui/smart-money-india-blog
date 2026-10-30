@@ -1,5 +1,9 @@
 {
   "_comment": "Same pattern as stream1: leave 'ADD_YOUR_...' placeholders until approved; the article generator skips the CTA line until a real link is set.",
   "amazon_books": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/books.html",
-  "templates_store": "https://payhip.com/b/IbWAZ"
+  "templates_store": "https://payhip.com/b/IbWAZ",
+  "amazon_psychology_of_money": "https://www.amazon.in/dp/9390166268?tag=smartmoneyin2-21",
+  "amazon_rich_dad": "https://www.amazon.in/dp/1612681131?tag=smartmoneyin2-21",
+  "amazon_millionaire_next_door": "https://www.amazon.in/dp/9394852492?tag=smartmoneyin2-21",
+  "amazon_trading_in_the_zone": "https://www.amazon.in/dp/0593538447?tag=smartmoneyin2-21"
 }
