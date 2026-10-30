@@ -86,40 +86,41 @@ def pick_topic() -> dict:
     return topic
 
 
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")  # has a free API tier
+# Free-tier text models, newest first. A model that returns 404 (retired / closed to new users) is skipped.
+GEMINI_MODELS = [m for m in (os.environ.get("GEMINI_MODEL"), "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite") if m]
 
 
 def draft_with_gemini(topic: dict, api_key: str) -> str:
-    """Calls the Gemini REST API directly (no SDK). Retries on rate limits / transient errors."""
+    """Calls the Gemini REST API directly (no SDK). Retries on rate limits, falls through to the next model on 404."""
     prompt = PROMPT_TEMPLATE.format(word_count=700, title=topic["title"], angle=topic["angle"])
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-    config = {"temperature": 0.6, "maxOutputTokens": 4096, "thinkingConfig": {"thinkingBudget": 0}}
     last_error = None
-    for attempt in range(5):
-        body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": config}
-        req = urllib.request.Request(
-            url, data=json.dumps(body).encode(), method="POST",
-            headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                data = json.loads(resp.read())
-            parts = data["candidates"][0]["content"]["parts"]
-            text = "".join(part.get("text", "") for part in parts).strip()
-            if len(text.split()) < 250:
-                raise ValueError(f"Gemini returned only {len(text.split())} words")
-            return text
-        except urllib.error.HTTPError as e:
-            detail = e.read().decode(errors="replace")[:300]
-            last_error = f"HTTP {e.code}: {detail}"
-            if e.code == 400 and "thinking" in detail.lower():
-                config = {k: v for k, v in config.items() if k != "thinkingConfig"}  # model without thinking config
-                continue
-            if e.code not in (429, 500, 503):
-                break
-        except (KeyError, IndexError, ValueError, urllib.error.URLError) as e:
-            last_error = repr(e)
-        time.sleep(15 * (attempt + 1))
+    for model in GEMINI_MODELS:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        config = {"temperature": 0.6, "maxOutputTokens": 8192}
+        for attempt in range(4):
+            body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": config}
+            req = urllib.request.Request(
+                url, data=json.dumps(body).encode(), method="POST",
+                headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=120) as resp:
+                    data = json.loads(resp.read())
+                parts = data["candidates"][0]["content"]["parts"]
+                text = "".join(part.get("text", "") for part in parts if not part.get("thought")).strip()
+                if len(text.split()) < 250:
+                    raise ValueError(f"{model} returned only {len(text.split())} words")
+                return text
+            except urllib.error.HTTPError as e:
+                detail = e.read().decode(errors="replace")[:300]
+                last_error = f"{model} HTTP {e.code}: {detail}"
+                if e.code == 404:
+                    break  # try the next model
+                if e.code not in (429, 500, 503):
+                    raise RuntimeError(f"Gemini draft failed for '{topic['title']}': {last_error}")
+            except (KeyError, IndexError, ValueError, urllib.error.URLError) as e:
+                last_error = f"{model} {e!r}"
+            time.sleep(15 * (attempt + 1))
     raise RuntimeError(f"Gemini draft failed for '{topic['title']}': {last_error}")
 
 
