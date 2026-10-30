@@ -17,6 +17,7 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
+from generate_pin_image import make_pin  # noqa: E402
 from site_builder import update_index_sitemap_rss, write_article  # noqa: E402
 
 TOPICS_PATH = Path(__file__).resolve().parent / "topics.json"
@@ -137,9 +138,11 @@ def main():
     description = topic["angle"][:150]
     out_path = write_article(topic["slug"], topic["title"], description, body)
     update_index_sitemap_rss(topic["slug"], topic["title"], description)
+    pin_path = make_pin(topic["slug"], topic["title"], description)
 
     print(f"Generated article via {source}: {topic['title']}")
     print(f"Written to: {out_path}")
+    print(f"Pinterest image: {pin_path}")
     if args.dry_run:
         print("Dry run flag set — note files were still written locally; nothing is pushed until you commit/push.")
 
