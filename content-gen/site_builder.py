@@ -12,7 +12,7 @@ SITE_NAME = "Smart Money India"
 DISCLAIMER = (
     "Educational content only — not investment advice. Not a SEBI-registered advisor. "
     "Please consult a certified financial advisor before investing. This page may contain "
-    "affiliate links; we may earn a commission at no extra cost to you."
+    "affiliate links; as an Amazon Associate I earn from qualifying purchases."
 )
 
 PAGE_TEMPLATE = """<!doctype html>
@@ -33,7 +33,7 @@ PAGE_TEMPLATE = """<!doctype html>
 </style>
 </head>
 <body>
-<nav><a href="../index.html">{site_name}</a></nav>
+<nav><a href="../index.html">{site_name}</a> <a href="../books.html">Recommended Books</a></nav>
 <h1>{title}</h1>
 <p><em>Published {date}</em></p>
 {body_html}
@@ -59,7 +59,7 @@ INDEX_TEMPLATE = """<!doctype html>
 </head>
 <body>
 <h1>{site_name}</h1>
-<p>Practical, India-specific personal finance and investing guides.</p>
+<p>Practical, India-specific personal finance and investing guides. <a href="books.html">Recommended books</a></p>
 <ul>
 {article_list}
 </ul>
