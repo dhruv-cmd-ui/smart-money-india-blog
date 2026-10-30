@@ -314,8 +314,9 @@ def update_index_sitemap_rss(slug: str, title: str, description: str) -> None:
 
 def update_feeds(entries: list) -> None:
     feed_entries = entries + EXTRA_PAGES
+    home = {"url": f"{SITE_BASE_URL}/", "date": max((e["date"] for e in entries), default=datetime.now(timezone.utc).strftime("%Y-%m-%d"))}
     urls = "\n".join(
-        f"  <url><loc>{e['url']}</loc><lastmod>{e['date']}</lastmod></url>" for e in feed_entries
+        f"  <url><loc>{e['url']}</loc><lastmod>{e['date']}</lastmod></url>" for e in [home] + feed_entries
     )
     sitemap = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}\n</urlset>\n'
     (SITE_DIR / "sitemap.xml").write_text(sitemap, encoding="utf-8")
