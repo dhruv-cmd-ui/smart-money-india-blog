@@ -91,12 +91,13 @@ GEMINI_MODELS = [m for m in (os.environ.get("GEMINI_MODEL"), "gemini-3.8-flash",
 
 
 def draft_with_gemini(topic: dict, api_key: str) -> str:
-    """Calls the Gemini REST API directly (no SDK). Retries on rate limits, falls through to the next model on 404."""
+    """Calls the Gemini REST API directly (no SDK). Retries on rate limits/timeouts, falls through to the next model on 404."""
     prompt = PROMPT_TEMPLATE.format(word_count=700, title=topic["title"], angle=topic["angle"])
     last_error = None
     for model in GEMINI_MODELS:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        config = {"temperature": 0.6, "maxOutputTokens": 8192}
+        # Low thinking effort keeps responses fast; dropped automatically if the model rejects it.
+        config = {"temperature": 0.6, "maxOutputTokens": 8192, "thinkingConfig": {"thinkingLevel": "low"}}
         for attempt in range(4):
             body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": config}
             req = urllib.request.Request(
@@ -104,7 +105,7 @@ def draft_with_gemini(topic: dict, api_key: str) -> str:
                 headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
             )
             try:
-                with urllib.request.urlopen(req, timeout=120) as resp:
+                with urllib.request.urlopen(req, timeout=240) as resp:
                     data = json.loads(resp.read())
                 parts = data["candidates"][0]["content"]["parts"]
                 text = "".join(part.get("text", "") for part in parts if not part.get("thought")).strip()
@@ -116,11 +117,15 @@ def draft_with_gemini(topic: dict, api_key: str) -> str:
                 last_error = f"{model} HTTP {e.code}: {detail}"
                 if e.code == 404:
                     break  # try the next model
+                if e.code == 400 and "thinkingConfig" in config:
+                    config = {k: v for k, v in config.items() if k != "thinkingConfig"}
+                    continue  # retry immediately without the thinking setting
                 if e.code not in (429, 500, 503):
                     raise RuntimeError(f"Gemini draft failed for '{topic['title']}': {last_error}")
-            except (KeyError, IndexError, ValueError, urllib.error.URLError) as e:
+            except (KeyError, IndexError, ValueError, OSError) as e:  # OSError covers timeouts and URLError
                 last_error = f"{model} {e!r}"
-            time.sleep(15 * (attempt + 1))
+            print(f"  retrying ({last_error[:160]})")
+            time.sleep(10 * (attempt + 1))
     raise RuntimeError(f"Gemini draft failed for '{topic['title']}': {last_error}")
 
 
