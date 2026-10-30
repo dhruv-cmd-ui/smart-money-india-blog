@@ -87,6 +87,7 @@ def pick_topic() -> dict:
 
 
 # Free-tier text models, newest first. A model that returns 404 (retired / closed to new users) is skipped.
+GENERIC_MARKER = "Start with the simplest version of the plan"  # text of the offline template
 GEMINI_MODELS = [m for m in (os.environ.get("GEMINI_MODEL"), "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite") if m]
 
 
@@ -98,14 +99,15 @@ def draft_with_gemini(topic: dict, api_key: str) -> str:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         # Low thinking effort keeps responses fast; dropped automatically if the model rejects it.
         config = {"temperature": 0.6, "maxOutputTokens": 8192, "thinkingConfig": {"thinkingLevel": "low"}}
-        for attempt in range(4):
+        for attempt in range(3):
             body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": config}
             req = urllib.request.Request(
                 url, data=json.dumps(body).encode(), method="POST",
                 headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
             )
+            print(f"  calling {model} (attempt {attempt + 1})...", flush=True)
             try:
-                with urllib.request.urlopen(req, timeout=240) as resp:
+                with urllib.request.urlopen(req, timeout=90) as resp:
                     data = json.loads(resp.read())
                 parts = data["candidates"][0]["content"]["parts"]
                 text = "".join(part.get("text", "") for part in parts if not part.get("thought")).strip()
@@ -124,7 +126,7 @@ def draft_with_gemini(topic: dict, api_key: str) -> str:
                     raise RuntimeError(f"Gemini draft failed for '{topic['title']}': {last_error}")
             except (KeyError, IndexError, ValueError, OSError) as e:  # OSError covers timeouts and URLError
                 last_error = f"{model} {e!r}"
-            print(f"  retrying ({last_error[:160]})")
+            print(f"  retrying ({last_error[:160]})", flush=True)
             time.sleep(10 * (attempt + 1))
     raise RuntimeError(f"Gemini draft failed for '{topic['title']}': {last_error}")
 
@@ -166,17 +168,37 @@ def make_description(topic: dict) -> str:
 
 
 def rewrite_all(api_key: str) -> None:
-    """One-off: replace every already-published article's body with a real Gemini draft."""
+    """One-off, resumable: replace every still-generic article body with a real Gemini draft.
+
+    Articles that no longer contain the generic template text are skipped, so a re-run only does what's left.
+    A failure on one article is logged and the next one is attempted; the exit code reports any failures.
+    """
     topics = {t["slug"]: t for t in json.loads(TOPICS_PATH.read_text(encoding="utf-8"))}
+    failed = []
+    done = 0
     for entry in json.loads((SITE_DIR / "manifest.json").read_text(encoding="utf-8")):
         topic = topics.get(entry["slug"])
         if not topic:
             continue
-        body = finish_body(topic, draft_with_gemini(topic, api_key))
+        page = SITE_DIR / "articles" / f"{topic['slug']}.html"
+        if page.exists() and GENERIC_MARKER not in page.read_text(encoding="utf-8"):
+            print(f"Skip (already rewritten): {topic['title']}", flush=True)
+            continue
+        print(f"Rewriting: {topic['title']}", flush=True)
+        try:
+            body = finish_body(topic, draft_with_gemini(topic, api_key))
+        except RuntimeError as e:
+            print(f"  FAILED: {e}", flush=True)
+            failed.append(topic["title"])
+            continue
         write_article(topic["slug"], topic["title"], make_description(topic), body, date=entry["date"])
-        print(f"Rewrote: {topic['title']}")
+        done += 1
+        print(f"  done ({done})", flush=True)
         time.sleep(8)  # stay inside free-tier rate limits
     refresh_site_metadata(topics)
+    if failed:
+        print(f"{len(failed)} article(s) failed, re-run to retry: {failed}", flush=True)
+        sys.exit(1)
 
 
 def main():
