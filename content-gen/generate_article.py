@@ -91,43 +91,53 @@ GENERIC_MARKER = "Start with the simplest version of the plan"  # text of the of
 GEMINI_MODELS = [m for m in (os.environ.get("GEMINI_MODEL"), "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite") if m]
 
 
+def _gemini_call(model: str, prompt: str, api_key: str, config: dict) -> str:
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": config}
+    req = urllib.request.Request(
+        url, data=json.dumps(body).encode(), method="POST",
+        headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
+    )
+    with urllib.request.urlopen(req, timeout=90) as resp:
+        data = json.loads(resp.read())
+    parts = data["candidates"][0]["content"]["parts"]
+    text = "".join(part.get("text", "") for part in parts if not part.get("thought")).strip()
+    if len(text.split()) < 250:
+        raise ValueError(f"{model} returned only {len(text.split())} words")
+    return text
+
+
 def draft_with_gemini(topic: dict, api_key: str) -> str:
-    """Calls the Gemini REST API directly (no SDK). Retries on rate limits/timeouts, falls through to the next model on 404."""
+    """Drafts via the Gemini REST API. Overloaded (503/429), slow or retired (404) models are skipped:
+    each round tries every remaining model once, then waits and goes around again."""
     prompt = PROMPT_TEMPLATE.format(word_count=700, title=topic["title"], angle=topic["angle"])
+    models = list(GEMINI_MODELS)
+    # Low thinking effort keeps responses fast; dropped per model if it rejects the setting.
+    configs = {m: {"temperature": 0.6, "maxOutputTokens": 8192, "thinkingConfig": {"thinkingLevel": "low"}} for m in models}
     last_error = None
-    for model in GEMINI_MODELS:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        # Low thinking effort keeps responses fast; dropped automatically if the model rejects it.
-        config = {"temperature": 0.6, "maxOutputTokens": 8192, "thinkingConfig": {"thinkingLevel": "low"}}
-        for attempt in range(3):
-            body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": config}
-            req = urllib.request.Request(
-                url, data=json.dumps(body).encode(), method="POST",
-                headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
-            )
-            print(f"  calling {model} (attempt {attempt + 1})...", flush=True)
-            try:
-                with urllib.request.urlopen(req, timeout=90) as resp:
-                    data = json.loads(resp.read())
-                parts = data["candidates"][0]["content"]["parts"]
-                text = "".join(part.get("text", "") for part in parts if not part.get("thought")).strip()
-                if len(text.split()) < 250:
-                    raise ValueError(f"{model} returned only {len(text.split())} words")
-                return text
-            except urllib.error.HTTPError as e:
-                detail = e.read().decode(errors="replace")[:300]
-                last_error = f"{model} HTTP {e.code}: {detail}"
-                if e.code == 404:
-                    break  # try the next model
-                if e.code == 400 and "thinkingConfig" in config:
-                    config = {k: v for k, v in config.items() if k != "thinkingConfig"}
-                    continue  # retry immediately without the thinking setting
-                if e.code not in (429, 500, 503):
-                    raise RuntimeError(f"Gemini draft failed for '{topic['title']}': {last_error}")
-            except (KeyError, IndexError, ValueError, OSError) as e:  # OSError covers timeouts and URLError
-                last_error = f"{model} {e!r}"
-            print(f"  retrying ({last_error[:160]})", flush=True)
-            time.sleep(10 * (attempt + 1))
+    for round_no in range(3):
+        for model in list(models):
+            for _ in range(2):  # second pass only to retry without the thinking setting
+                print(f"  calling {model} (round {round_no + 1})...", flush=True)
+                try:
+                    return _gemini_call(model, prompt, api_key, configs[model])
+                except urllib.error.HTTPError as e:
+                    detail = e.read().decode(errors="replace")[:300]
+                    last_error = f"{model} HTTP {e.code}: {detail}"
+                    if e.code == 404:
+                        models.remove(model)
+                    elif e.code == 400 and "thinkingConfig" in configs[model]:
+                        configs[model] = {k: v for k, v in configs[model].items() if k != "thinkingConfig"}
+                        continue
+                    elif e.code not in (429, 500, 503):
+                        raise RuntimeError(f"Gemini draft failed for '{topic['title']}': {last_error}")
+                except (KeyError, IndexError, ValueError, OSError) as e:  # OSError covers timeouts and URLError
+                    last_error = f"{model} {e!r}"
+                print(f"  skipping {model}: {last_error[:140]}", flush=True)
+                break
+        if not models:
+            break
+        time.sleep(15 * (round_no + 1))
     raise RuntimeError(f"Gemini draft failed for '{topic['title']}': {last_error}")
 
 
