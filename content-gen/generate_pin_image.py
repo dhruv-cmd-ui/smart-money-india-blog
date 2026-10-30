@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 DOCS = Path(__file__).resolve().parent.parent / "docs"
 PINS_DIR = DOCS / "pins"
+ART_DIR = DOCS / "pin-art"  # optional illustrated backgrounds: pin-art/<slug>.png (2:3, no text)
 FONTS = Path(__file__).resolve().parent / "fonts"
 SIZE = (1000, 1500)  # Pinterest's recommended 2:3 aspect ratio
 MARGIN = 70
@@ -70,8 +71,63 @@ def _wrap(draw, text, font, max_width):
     return lines
 
 
+def _make_art_pin(slug: str, title: str, art_path: Path, accent: str) -> Path:
+    """Illustration as full-bleed background; headline on a dark fade at the top, CTA at the bottom."""
+    art = Image.open(art_path).convert("RGB")
+    scale = max(SIZE[0] / art.width, SIZE[1] / art.height)
+    art = art.resize((int(art.width * scale) + 1, int(art.height * scale) + 1), Image.LANCZOS)
+    left, top = (art.width - SIZE[0]) // 2, (art.height - SIZE[1]) // 2
+    img = art.crop((left, top, left + SIZE[0], top + SIZE[1])).convert("RGBA")
+
+    fade = Image.new("RGBA", SIZE, (0, 0, 0, 0))
+    fd = ImageDraw.Draw(fade)
+    for y in range(900):  # top fade for headline legibility
+        fd.line([(0, y), (SIZE[0], y)], fill=(8, 20, 40, int(215 * (1 - y / 900) ** 1.3)))
+    for y in range(SIZE[1] - 330, SIZE[1]):  # bottom fade for the CTA
+        fd.line([(0, y), (SIZE[0], y)], fill=(8, 20, 40, int(190 * (y - (SIZE[1] - 330)) / 330)))
+    img = Image.alpha_composite(img, fade)
+    draw = ImageDraw.Draw(img)
+    width = SIZE[0] - 2 * MARGIN
+
+    pill_font = _font("Bold", 30)
+    label = "SMART MONEY INDIA"
+    pw = _text_width(draw, label, pill_font)
+    draw.rounded_rectangle([MARGIN, MARGIN, MARGIN + pw + 60, MARGIN + 74], radius=37, fill=accent)
+    draw.text((MARGIN + 30, MARGIN + 17), label, font=pill_font, fill="#111111")
+
+    for size in (90, 82, 74, 66, 58):
+        title_font = _font("ExtraBold", size)
+        lines = _wrap(draw, title, title_font, width)
+        if len(lines) <= 4:
+            break
+    y = 190
+    for i, line in enumerate(lines):
+        draw.text((MARGIN + 3, y + 4), line, font=title_font, fill=(0, 0, 0, 120))
+        draw.text((MARGIN, y), line, font=title_font, fill=accent if i == 0 else "#FFFFFF")
+        y += int(size * 1.2)
+
+    btn_y = SIZE[1] - 190
+    draw.rounded_rectangle([MARGIN, btn_y, SIZE[0] - MARGIN, btn_y + 110], radius=55, fill=accent)
+    cta_font = _font("ExtraBold", 42)
+    cta = "READ THE FULL GUIDE"
+    tw = _text_width(draw, cta, cta_font)
+    tx = (SIZE[0] - tw - 70) / 2
+    draw.text((tx, btn_y + 27), cta, font=cta_font, fill="#111111")
+    ax, ay = tx + tw + 30, btn_y + 55
+    draw.line([(ax, ay), (ax + 40, ay)], fill="#111111", width=8)
+    draw.polygon([(ax + 28, ay - 18), (ax + 52, ay), (ax + 28, ay + 18)], fill="#111111")
+
+    PINS_DIR.mkdir(parents=True, exist_ok=True)
+    out = PINS_DIR / f"{slug}.png"
+    img.convert("RGB").save(out, format="PNG", optimize=True)
+    return out
+
+
 def make_pin(slug: str, title: str, description: str) -> Path:
     top, bottom, accent = PALETTES[int(hashlib.md5(slug.encode()).hexdigest(), 16) % len(PALETTES)]
+    art_path = ART_DIR / f"{slug}.png"
+    if art_path.exists():
+        return _make_art_pin(slug, title, art_path, "#FFD93D")
     base = _gradient(SIZE, top, bottom).convert("RGBA")
 
     # Decorative translucent circles + a big rupee watermark for depth.
