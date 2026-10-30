@@ -7,6 +7,10 @@ import json
 import os
 import random
 import sys
+import textwrap
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -18,7 +22,7 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 from generate_pin_image import make_pin  # noqa: E402
-from site_builder import update_index_sitemap_rss, write_article  # noqa: E402
+from site_builder import SITE_DIR, refresh_site_metadata, update_index_sitemap_rss, write_article  # noqa: E402
 
 TOPICS_PATH = Path(__file__).resolve().parent / "topics.json"
 STATE_PATH = Path(__file__).resolve().parent / "state.json"
@@ -50,6 +54,8 @@ Rules:
 - Structure: a short intro paragraph, 3-4 "## Subheading" sections, a short conclusion paragraph.
 - Use **bold** sparingly for key terms only.
 - Do not include a title heading (the page already shows the title) — start directly with the intro paragraph.
+- Only state figures, limits and rates you are certain of; otherwise say "check the current rules" instead of guessing. Never invent statistics or quotes.
+- Include at least one concrete rupee example with simple arithmetic.
 - Do not include a disclaimer (the page already appends one).
 """
 
@@ -80,14 +86,41 @@ def pick_topic() -> dict:
     return topic
 
 
-def draft_with_gemini(topic: dict, api_key: str) -> str:
-    import google.generativeai as genai
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")  # has a free API tier
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash")
-    prompt = PROMPT_TEMPLATE.format(word_count=600, title=topic["title"], angle=topic["angle"])
-    response = model.generate_content(prompt)
-    return response.text.strip()
+
+def draft_with_gemini(topic: dict, api_key: str) -> str:
+    """Calls the Gemini REST API directly (no SDK). Retries on rate limits / transient errors."""
+    prompt = PROMPT_TEMPLATE.format(word_count=700, title=topic["title"], angle=topic["angle"])
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+    config = {"temperature": 0.6, "maxOutputTokens": 4096, "thinkingConfig": {"thinkingBudget": 0}}
+    last_error = None
+    for attempt in range(5):
+        body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": config}
+        req = urllib.request.Request(
+            url, data=json.dumps(body).encode(), method="POST",
+            headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                data = json.loads(resp.read())
+            parts = data["candidates"][0]["content"]["parts"]
+            text = "".join(part.get("text", "") for part in parts).strip()
+            if len(text.split()) < 250:
+                raise ValueError(f"Gemini returned only {len(text.split())} words")
+            return text
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode(errors="replace")[:300]
+            last_error = f"HTTP {e.code}: {detail}"
+            if e.code == 400 and "thinking" in detail.lower():
+                config = {k: v for k, v in config.items() if k != "thinkingConfig"}  # model without thinking config
+                continue
+            if e.code not in (429, 500, 503):
+                break
+        except (KeyError, IndexError, ValueError, urllib.error.URLError) as e:
+            last_error = repr(e)
+        time.sleep(15 * (attempt + 1))
+    raise RuntimeError(f"Gemini draft failed for '{topic['title']}': {last_error}")
 
 
 def draft_fallback(topic: dict) -> str:
@@ -111,31 +144,63 @@ def draft_fallback(topic: dict) -> str:
     )
 
 
+def finish_body(topic: dict, body: str) -> str:
+    book = BOOK_FOR_TOPIC.get(topic["slug"])
+    book_url = load_affiliate_link(book[0]) if book else None
+    if book_url:
+        body += f"\n\n**Further reading:** [{book[1]}]({book_url}) explains {book[2]}. (affiliate link — we may earn a commission)"
+    cta_link = load_affiliate_link("amazon_books")
+    if cta_link:
+        body += f"\n\nIf you want to go deeper on this topic, here are some recommended reads: {cta_link} (affiliate link — we may earn a commission)."
+    return body
+
+
+def make_description(topic: dict) -> str:
+    return textwrap.shorten(topic["angle"], width=155, placeholder="...")
+
+
+def rewrite_all(api_key: str) -> None:
+    """One-off: replace every already-published article's body with a real Gemini draft."""
+    topics = {t["slug"]: t for t in json.loads(TOPICS_PATH.read_text(encoding="utf-8"))}
+    for entry in json.loads((SITE_DIR / "manifest.json").read_text(encoding="utf-8")):
+        topic = topics.get(entry["slug"])
+        if not topic:
+            continue
+        body = finish_body(topic, draft_with_gemini(topic, api_key))
+        write_article(topic["slug"], topic["title"], make_description(topic), body, date=entry["date"])
+        print(f"Rewrote: {topic['title']}")
+        time.sleep(8)  # stay inside free-tier rate limits
+    refresh_site_metadata(topics)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="Write files but don't rely on live Gemini quota state persisting is still fine to commit")
+    parser.add_argument("--allow-fallback", action="store_true", help="Publish the generic offline template when no GEMINI_API_KEY is set (testing only)")
+    parser.add_argument("--rewrite-all", action="store_true", help="Rewrite every published article with a fresh Gemini draft")
     args = parser.parse_args()
 
-    topic = pick_topic()
     api_key = os.environ.get("GEMINI_API_KEY")
+    if args.rewrite_all:
+        if not api_key:
+            sys.exit("GEMINI_API_KEY is required for --rewrite-all")
+        rewrite_all(api_key)
+        return
+    if not api_key and not args.allow_fallback:
+        # The offline template is identical filler for every topic, so never publish it by default.
+        print("GEMINI_API_KEY not set: skipping publish (nothing generic gets published). Use --allow-fallback to test.")
+        return
 
+    topic = pick_topic()
     if api_key:
         body = draft_with_gemini(topic, api_key)
         source = "gemini"
     else:
         body = draft_fallback(topic)
         source = "fallback-template"
+    body = finish_body(topic, body)
 
-    book = BOOK_FOR_TOPIC.get(topic["slug"])
-    book_url = load_affiliate_link(book[0]) if book else None
-    if book_url:
-        body += f"\n\n**Further reading:** [{book[1]}]({book_url}) explains {book[2]}. (affiliate link — we may earn a commission)"
-
-    cta_link = load_affiliate_link("amazon_books")
-    if cta_link:
-        body += f"\n\nIf you want to go deeper on this topic, here are some recommended reads: {cta_link} (affiliate link — we may earn a commission)."
-
-    description = topic["angle"][:150]
+    description = make_description(topic)
     out_path = write_article(topic["slug"], topic["title"], description, body)
     update_index_sitemap_rss(topic["slug"], topic["title"], description)
     pin_path = make_pin(topic["slug"], topic["title"], description)

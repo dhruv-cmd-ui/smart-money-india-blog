@@ -191,9 +191,9 @@ def _extract_body(page_html: str) -> str:
     return m.group(1).strip() if m else ""
 
 
-def write_article(slug: str, title: str, description: str, body_markdown: str) -> Path:
+def write_article(slug: str, title: str, description: str, body_markdown: str, date: str | None = None) -> Path:
     ARTICLES_DIR.mkdir(parents=True, exist_ok=True)
-    date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     out_path = ARTICLES_DIR / f"{slug}.html"
     out_path.write_text(
         render_article(slug, title, description, date, to_html(body_markdown), _load_manifest()), encoding="utf-8"
@@ -280,6 +280,19 @@ def rebuild_all(entries: list) -> None:
     (SITE_DIR / "books.html").write_text(render_books_page(), encoding="utf-8")
 
 
+def refresh_site_metadata(topics_by_slug: dict) -> None:
+    """Re-render all pages after bodies/descriptions changed in bulk (keeps manifest dates and order)."""
+    import textwrap
+    entries = _load_manifest()
+    for e in entries:
+        topic = topics_by_slug.get(e["slug"])
+        if topic:
+            e["description"] = textwrap.shorten(topic["angle"], width=155, placeholder="...")
+    _save_manifest(entries)
+    rebuild_all(entries)
+    update_feeds(entries)
+
+
 def update_index_sitemap_rss(slug: str, title: str, description: str) -> None:
     entries = _load_manifest()
     entries = [e for e in entries if e["slug"] != slug]
@@ -292,7 +305,10 @@ def update_index_sitemap_rss(slug: str, title: str, description: str) -> None:
     })
     _save_manifest(entries)
     rebuild_all(entries)
+    update_feeds(entries)
 
+
+def update_feeds(entries: list) -> None:
     feed_entries = entries + EXTRA_PAGES
     urls = "\n".join(
         f"  <url><loc>{e['url']}</loc><lastmod>{e['date']}</lastmod></url>" for e in feed_entries

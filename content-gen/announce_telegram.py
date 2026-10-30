@@ -6,6 +6,7 @@ import os
 import sys
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 MANIFEST_PATH = Path(__file__).resolve().parent.parent / "docs" / "manifest.json"
@@ -26,6 +27,10 @@ def main():
     args = parser.parse_args()
 
     entry = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))[0]
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if entry["date"] != today and not args.dry_run:
+        print(f"Newest article is from {entry['date']}, not today: nothing new to announce.")
+        return
     message = build_message(entry)
     print(message)
     if args.dry_run:
