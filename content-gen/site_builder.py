@@ -244,7 +244,10 @@ def render_index(entries: list) -> str:
         DESC="Practical, India-specific personal finance and investing guides. A new guide every day.",
         URL=f"{SITE_BASE_URL}/", OGTYPE="website", OGTITLE=_esc(SITE_NAME),
         OGIMAGE=f"{SITE_BASE_URL}/pin-image.png",
-        EXTRAHEAD='<meta name="p:domain_verify" content="dbfb7ad96e16ce00515dd5459bea91ec"/>\n',
+        EXTRAHEAD=(
+            '<meta name="p:domain_verify" content="dbfb7ad96e16ce00515dd5459bea91ec"/>\n'
+            '<meta name="google-site-verification" content="s_X7ns7NnLeJNGduyovPWwvMMMRLxh4q0ZwxTtR09Bw" />\n'
+        ),
         ROOT="", FEATURED=feat_html, CARDS="".join(_card(e, "") for e in entries[1:] or entries), BOOKS=_book_cards(),
     )
 
