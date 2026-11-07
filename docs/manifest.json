@@ -1,5 +1,12 @@
 [
   {
+    "slug": "sip-vs-lumpsum",
+    "title": "SIP vs Lumpsum Investing: Which Wins in the Indian Market?",
+    "description": "Compare rupee cost averaging against lumpsum investing using historical Nifty behavior, cover when each approach makes more sense, and give a simple...",
+    "date": "2026-11-07",
+    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/sip-vs-lumpsum.html"
+  },
+  {
     "slug": "retirement-planning-30s-india",
     "title": "Retirement Planning in Your 30s: An India-Specific Roadmap",
     "description": "Walk through NPS, EPF, mutual fund SIPs, and a simple corpus target calculation for someone starting retirement planning in their 30s.",
@@ -75,13 +82,6 @@
     "description": "Compare ELSS, PPF, EPF, NSC, and tax-saving FDs on lock-in, returns, and risk, for an Indian salaried reader planning before the March 31 deadline.",
     "date": "2026-10-24",
     "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/best-tax-saving-investments-80c.html"
-  },
-  {
-    "slug": "sip-vs-lumpsum",
-    "title": "SIP vs Lumpsum Investing: Which Wins in the Indian Market?",
-    "description": "Compare rupee cost averaging against lumpsum investing using historical Nifty behavior, cover when each approach makes more sense, and give a simple...",
-    "date": "2026-10-23",
-    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/sip-vs-lumpsum.html"
   },
   {
     "slug": "home-loan-prepayment-strategy",
