@@ -1,5 +1,12 @@
 [
   {
+    "slug": "mutual-fund-direct-vs-regular",
+    "title": "Direct vs Regular Mutual Funds: How Much Does It Really Cost You?",
+    "description": "Quantify the long-term cost of regular plan commissions vs direct plans with a concrete compounding example.",
+    "date": "2026-11-09",
+    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/mutual-fund-direct-vs-regular.html"
+  },
+  {
     "slug": "health-insurance-sum-insured",
     "title": "How Much Health Insurance Cover Do You Actually Need?",
     "description": "Cover rising medical inflation in India, how to calculate adequate sum insured by city tier and family size, and common underinsurance traps.",
@@ -54,13 +61,6 @@
     "description": "Compare NPS tax benefits and lock-in against mutual fund flexibility for long-term retirement saving in India.",
     "date": "2026-11-01",
     "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/nps-vs-mutual-funds-retirement.html"
-  },
-  {
-    "slug": "mutual-fund-direct-vs-regular",
-    "title": "Direct vs Regular Mutual Funds: How Much Does It Really Cost You?",
-    "description": "Quantify the long-term cost of regular plan commissions vs direct plans with a concrete compounding example.",
-    "date": "2026-10-30",
-    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/mutual-fund-direct-vs-regular.html"
   },
   {
     "slug": "index-funds-beginners-india",
