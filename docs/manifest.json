@@ -1,5 +1,12 @@
 [
   {
+    "slug": "home-loan-prepayment-strategy",
+    "title": "Should You Prepay Your Home Loan or Invest the Extra Money?",
+    "description": "Compare home loan prepayment against investing the same amount, with a simple rate-comparison framework and tax implication notes.",
+    "date": "2026-11-10",
+    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/home-loan-prepayment-strategy.html"
+  },
+  {
     "slug": "mutual-fund-direct-vs-regular",
     "title": "Direct vs Regular Mutual Funds: How Much Does It Really Cost You?",
     "description": "Quantify the long-term cost of regular plan commissions vs direct plans with a concrete compounding example.",
@@ -82,13 +89,6 @@
     "description": "Compare ELSS, PPF, EPF, NSC, and tax-saving FDs on lock-in, returns, and risk, for an Indian salaried reader planning before the March 31 deadline.",
     "date": "2026-10-24",
     "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/best-tax-saving-investments-80c.html"
-  },
-  {
-    "slug": "home-loan-prepayment-strategy",
-    "title": "Should You Prepay Your Home Loan or Invest the Extra Money?",
-    "description": "Compare home loan prepayment against investing the same amount, with a simple rate-comparison framework and tax implication notes.",
-    "date": "2026-10-21",
-    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/home-loan-prepayment-strategy.html"
   },
   {
     "slug": "emergency-fund-india",
