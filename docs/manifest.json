@@ -1,5 +1,12 @@
 [
   {
+    "slug": "index-funds-beginners-india",
+    "title": "Index Funds for Beginners: A Simple India-Focused Guide",
+    "description": "Explain what an index fund is, Nifty 50 vs Sensex tracking funds, expense ratios, and how a beginner should pick their first one.",
+    "date": "2026-11-11",
+    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/index-funds-beginners-india.html"
+  },
+  {
     "slug": "home-loan-prepayment-strategy",
     "title": "Should You Prepay Your Home Loan or Invest the Extra Money?",
     "description": "Compare home loan prepayment against investing the same amount, with a simple rate-comparison framework and tax implication notes.",
@@ -68,13 +75,6 @@
     "description": "Compare NPS tax benefits and lock-in against mutual fund flexibility for long-term retirement saving in India.",
     "date": "2026-11-01",
     "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/nps-vs-mutual-funds-retirement.html"
-  },
-  {
-    "slug": "index-funds-beginners-india",
-    "title": "Index Funds for Beginners: A Simple India-Focused Guide",
-    "description": "Explain what an index fund is, Nifty 50 vs Sensex tracking funds, expense ratios, and how a beginner should pick their first one.",
-    "date": "2026-10-29",
-    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/index-funds-beginners-india.html"
   },
   {
     "slug": "credit-score-improve-india",
