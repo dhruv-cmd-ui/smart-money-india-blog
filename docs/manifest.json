@@ -1,5 +1,12 @@
 [
   {
+    "slug": "best-tax-saving-investments-80c",
+    "title": "Section 80C Tax-Saving Investments Compared",
+    "description": "Compare ELSS, PPF, EPF, NSC, and tax-saving FDs on lock-in, returns, and risk, for an Indian salaried reader planning before the March 31 deadline.",
+    "date": "2026-11-14",
+    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/best-tax-saving-investments-80c.html"
+  },
+  {
     "slug": "budgeting-methods-compared",
     "title": "50/30/20 vs Zero-Based Budgeting: Which Fits You Better?",
     "description": "Compare two popular budgeting methods with Indian rupee examples and guidance on which personality type suits each.",
@@ -96,12 +103,5 @@
     "description": "Explain what actually moves a CIBIL score, common myths, and a realistic 6-month improvement plan.",
     "date": "2026-10-27",
     "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/credit-score-improve-india.html"
-  },
-  {
-    "slug": "best-tax-saving-investments-80c",
-    "title": "Section 80C Tax-Saving Investments Compared",
-    "description": "Compare ELSS, PPF, EPF, NSC, and tax-saving FDs on lock-in, returns, and risk, for an Indian salaried reader planning before the March 31 deadline.",
-    "date": "2026-10-24",
-    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/best-tax-saving-investments-80c.html"
   }
 ]
