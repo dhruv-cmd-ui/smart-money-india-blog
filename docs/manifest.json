@@ -1,5 +1,12 @@
 [
   {
+    "slug": "index-funds-beginners-india",
+    "title": "Index Funds for Beginners: A Simple India-Focused Guide",
+    "description": "Explain what an index fund is, Nifty 50 vs Sensex tracking funds, expense ratios, and how a beginner should pick their first one.",
+    "date": "2026-11-18",
+    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/index-funds-beginners-india.html"
+  },
+  {
     "slug": "debt-funds-explained-india",
     "title": "Debt Mutual Funds Explained: Risk, Returns, and When to Use Them",
     "description": "Explain interest rate risk, credit risk, and duration in debt funds for an Indian reader considering them as an FD alternative.",
@@ -40,13 +47,6 @@
     "description": "Explain the 3-6 month rule, how it differs for salaried vs self-employed readers, where to park the fund (liquid funds vs savings account), and common...",
     "date": "2026-11-12",
     "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/emergency-fund-india.html"
-  },
-  {
-    "slug": "index-funds-beginners-india",
-    "title": "Index Funds for Beginners: A Simple India-Focused Guide",
-    "description": "Explain what an index fund is, Nifty 50 vs Sensex tracking funds, expense ratios, and how a beginner should pick their first one.",
-    "date": "2026-11-11",
-    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/index-funds-beginners-india.html"
   },
   {
     "slug": "home-loan-prepayment-strategy",
