@@ -1,5 +1,12 @@
 [
   {
+    "slug": "retirement-planning-30s-india",
+    "title": "Retirement Planning in Your 30s: An India-Specific Roadmap",
+    "description": "Walk through NPS, EPF, mutual fund SIPs, and a simple corpus target calculation for someone starting retirement planning in their 30s.",
+    "date": "2026-11-21",
+    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/retirement-planning-30s-india.html"
+  },
+  {
     "slug": "health-insurance-sum-insured",
     "title": "How Much Health Insurance Cover Do You Actually Need?",
     "description": "Cover rising medical inflation in India, how to calculate adequate sum insured by city tier and family size, and common underinsurance traps.",
@@ -75,13 +82,6 @@
     "description": "Compare rupee cost averaging against lumpsum investing using historical Nifty behavior, cover when each approach makes more sense, and give a simple...",
     "date": "2026-11-07",
     "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/sip-vs-lumpsum.html"
-  },
-  {
-    "slug": "retirement-planning-30s-india",
-    "title": "Retirement Planning in Your 30s: An India-Specific Roadmap",
-    "description": "Walk through NPS, EPF, mutual fund SIPs, and a simple corpus target calculation for someone starting retirement planning in their 30s.",
-    "date": "2026-11-06",
-    "url": "https://dhruv-cmd-ui.github.io/smart-money-india-blog/articles/retirement-planning-30s-india.html"
   },
   {
     "slug": "term-insurance-how-much-cover",
